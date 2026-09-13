@@ -8,9 +8,19 @@ struct Ticket {
 
 impl PartialEq for Ticket {
     fn eq(&self, other: &Self) -> bool {
-        self.status == other.status
-            && self.description == other.description
-            && self.title == other.title
+        let Ticket {
+            title,
+            description,
+            status,
+        } = self;
+
+        let Ticket {
+            title: other_title,
+            description: other_description,
+            status: other_status,
+        } = other;
+
+        title == other_title && description == other_description && status == other_status
     }
 }
 
