@@ -2,7 +2,19 @@
 //   When the description is invalid, instead, it should use a default description:
 //   "Description not provided".
 fn easy_ticket(title: String, description: String, status: Status) -> Ticket {
-    todo!()
+    if let Err(err) = validate_title(&title) {
+        panic!("{err}");
+    }
+
+    let description = {
+        if validate_description(&description).is_err() {
+            "Description not provided".into()
+        } else {
+            description
+        }
+    };
+
+    Ticket::new(title, description, status).expect("Ticket still invalid")
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -19,20 +31,32 @@ enum Status {
     Done,
 }
 
+fn validate_title(title: &str) -> Result<(), String> {
+    if title.is_empty() {
+        return Err("Title cannot be empty".to_string());
+    }
+    if title.len() > 50 {
+        return Err("Title cannot be longer than 50 bytes".to_string());
+    }
+
+    Ok(())
+}
+
+fn validate_description(description: &str) -> Result<(), String> {
+    if description.is_empty() {
+        return Err("Description cannot be empty".to_string());
+    }
+    if description.len() > 500 {
+        return Err("Description cannot be longer than 500 bytes".to_string());
+    }
+
+    Ok(())
+}
+
 impl Ticket {
     pub fn new(title: String, description: String, status: Status) -> Result<Ticket, String> {
-        if title.is_empty() {
-            return Err("Title cannot be empty".to_string());
-        }
-        if title.len() > 50 {
-            return Err("Title cannot be longer than 50 bytes".to_string());
-        }
-        if description.is_empty() {
-            return Err("Description cannot be empty".to_string());
-        }
-        if description.len() > 500 {
-            return Err("Description cannot be longer than 500 bytes".to_string());
-        }
+        validate_title(&title)?;
+        validate_description(&description)?;
 
         Ok(Ticket {
             title,
