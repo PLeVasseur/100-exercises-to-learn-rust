@@ -1,3 +1,4 @@
+use crate::status::ParseStatusError;
 use crate::status::Status;
 
 // We've seen how to declare modules in one of the earliest exercises, but
@@ -23,6 +24,11 @@ pub enum TicketNewError {
     DescriptionCannotBeEmpty,
     #[error("Description cannot be longer than 500 bytes")]
     DescriptionTooLong,
+    #[error("Description cannot be longer than 500 bytes")]
+    StatusStringInvalid {
+        #[from]
+        inner: ParseStatusError,
+    },
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -34,20 +40,22 @@ pub struct Ticket {
 
 impl Ticket {
     pub fn new(title: String, description: String, status: String) -> Result<Self, TicketNewError> {
-        if title.is_empty() {
-            return Err(TicketNewError::TitleCannotBeEmpty);
-        }
-        if title.len() > 50 {
-            return Err(TicketNewError::TitleTooLong);
-        }
-        if description.is_empty() {
-            return Err(TicketNewError::DescriptionCannotBeEmpty);
-        }
-        if description.len() > 500 {
-            return Err(TicketNewError::DescriptionTooLong);
-        }
+        // if title.is_empty() {
+        //     return Err(TicketNewError::TitleCannotBeEmpty);
+        // }
+        // if title.len() > 50 {
+        //     return Err(TicketNewError::TitleTooLong);
+        // }
+        // if description.is_empty() {
+        //     return Err(TicketNewError::DescriptionCannotBeEmpty);
+        // }
+        // if description.len() > 500 {
+        //     return Err(TicketNewError::DescriptionTooLong);
+        // }
 
-        // TODO: Parse the status string into a `Status` enum.
+        eprintln!("status: {status:?}");
+
+        let status = status.try_into()?;
 
         Ok(Ticket {
             title,
@@ -67,9 +75,10 @@ mod tests {
     #[test]
     fn invalid_status() {
         let err = Ticket::new(valid_title(), valid_description(), "invalid".into()).unwrap_err();
+
         assert_eq!(
-            err.to_string(),
-            "`invalid` is not a valid status. Use one of: ToDo, InProgress, Done"
+            err.source().expect("error exists").to_string(),
+            "`invalid` is not a valid status. Use one of: ToDo, InProgress, Done",
         );
         assert!(err.source().is_some());
     }
