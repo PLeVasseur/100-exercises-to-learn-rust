@@ -1,4 +1,4 @@
-use crate::store::TicketId;
+pub use crate::store::TicketId;
 use ticket_fields::{TicketDescription, TicketTitle};
 
 #[derive(Clone, Debug, PartialEq)]
