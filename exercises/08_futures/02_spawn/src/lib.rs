@@ -3,8 +3,51 @@ use tokio::net::TcpListener;
 // TODO: write an echo server that accepts TCP connections on two listeners, concurrently.
 //  Multiple connections (on the same listeners) should be processed concurrently.
 //  The received data should be echoed back to the client.
+pub async fn echoes_v1(first: TcpListener, second: TcpListener) -> Result<(), anyhow::Error> {
+    loop {
+        let first_c = first.accept().await?;
+        tokio::spawn(async {
+            let (mut stream, _) = first_c;
+            let (mut r, mut w) = stream.split();
+            tokio::io::copy(&mut r, &mut w)
+                .await
+                .expect("copy should not fail");
+        });
+
+        let second_c = second.accept().await?;
+        tokio::spawn(async {
+            let (mut stream, _) = second_c;
+            let (mut r, mut w) = stream.split();
+            tokio::io::copy(&mut r, &mut w)
+                .await
+                .expect("copy should not fail");
+        });
+    }
+}
+
 pub async fn echoes(first: TcpListener, second: TcpListener) -> Result<(), anyhow::Error> {
-    todo!()
+    tokio::spawn(async {
+        echo(first).await.expect("don't fail echo");
+    });
+
+    tokio::spawn(async {
+        echo(second).await.expect("don't fail echo");
+    });
+
+    Ok(())
+}
+
+pub async fn echo(l: TcpListener) -> Result<(), anyhow::Error> {
+    loop {
+        let c = l.accept().await?;
+        tokio::spawn(async {
+            let (mut stream, _) = c;
+            let (mut r, mut w) = stream.split();
+            tokio::io::copy(&mut r, &mut w)
+                .await
+                .expect("copy should not fail");
+        });
+    }
 }
 
 #[cfg(test)]
