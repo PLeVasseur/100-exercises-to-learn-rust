@@ -10,6 +10,34 @@ where
     // `T` cannot be cloned. How do you share it between the two server tasks?
     T: Display + Send + Sync + 'static,
 {
+    let shareable_reply = format!("{reply}");
+
+    let first_reply = shareable_reply.clone();
+    let first_reply = Box::new(first_reply.into_bytes());
+    let first_reply = first_reply.leak();
+
+    let second_reply = shareable_reply.clone();
+    let second_reply = Box::new(second_reply.into_bytes());
+    let second_reply = second_reply.leak();
+
+    loop {
+        let first_c = first.accept().await.expect("hope for the best!");
+        tokio::spawn(async {
+            let (mut stream, _) = first_c;
+            if let Ok(_) = stream.writable().await {
+                stream.try_write(first_reply).expect("hope for the best!");
+            }
+        });
+
+        let second_c = second.accept().await.expect("hope for the best!");
+        tokio::spawn(async {
+            let (mut stream, _) = second_c;
+            if let Ok(_) = stream.writable().await {
+                stream.try_write(second_reply).expect("hope for the best!");
+            }
+        });
+    }
+
     todo!()
 }
 
